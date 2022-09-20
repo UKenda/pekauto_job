@@ -64,12 +64,12 @@ class calculation:
                 angle = math.atan(diff_y/diff_x)
                 #print("angle", angle*180/self.pi)
                 old_point = point
-                heading = np.append(heading,[point[0],diff_x,diff_y,angle*180/self.pi,speed/1000],axis=0)
+                heading.append([point[0],diff_x,diff_y,angle*180/self.pi,speed/1000])
                 i+=1
 
         print("Vector of heading")
         print("time[s] | x[mm] | y[mm] | angle[deg] | speed[m/s]")
-        print(heading)
+        print(np.array(heading))
 
    
 
