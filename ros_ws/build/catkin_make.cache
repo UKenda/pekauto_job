@@ -1,0 +1,2 @@
+pekauto_task
+-DCATKIN_DEVEL_PREFIX=/home/ubuntu/pekauto_urban_kenda/ros_ws/devel -DCMAKE_INSTALL_PREFIX=/home/ubuntu/pekauto_urban_kenda/ros_ws/install -G Unix Makefiles

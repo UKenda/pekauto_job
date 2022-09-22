@@ -1,0 +1,8 @@
+prefix=/home/ubuntu/pekauto_urban_kenda/ros_ws/install
+
+Name: pekauto_task
+Description: Description of pekauto_task
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

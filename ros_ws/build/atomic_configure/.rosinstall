@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/ubuntu/pekauto_urban_kenda/ros_ws/devel/setup.sh

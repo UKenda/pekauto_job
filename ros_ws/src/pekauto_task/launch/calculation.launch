@@ -1,0 +1,15 @@
+<launch>
+
+
+    <arg name="rviz_config" default="$(find pekauto_task)/rviz/config.rviz"/>
+    
+
+
+    <node name="csv_calculation_node" pkg="pekauto_task" type="csv_calculator.py" output="screen"/>
+  
+    <param name="robot_description" textfile="$(find pekauto_task)/model/model.urdf"/>
+	<node type="rviz" name="rviz" pkg="rviz" args="-d $(arg rviz_config)" />
+
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+
+</launch>
