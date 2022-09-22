@@ -1,0 +1,81 @@
+<?xml version="1.0"?>
+<robot name="model"
+    xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+
+
+
+    <link name="base_link">  
+        <collision>
+            <origin rpy="0 0 0" xyz="0 0 -0.05"/>
+            <geometry>
+                <box size="2.5 1.5 0.1"/>
+            </geometry>
+        </collision>
+        <visual>
+            <origin rpy="0 0 0" xyz="0 0 -0.05"/>
+            <geometry>
+                <box size="2.5 1.5 0.1"/>
+
+            </geometry>
+            <material name="grey">
+                <color rgba="0.75 0.75 0.75 0.7"/>
+            </material>
+        </visual>
+    </link>
+
+
+    
+    <joint name="pole_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="pole"/>
+        <origin xyz="0 0 1.5" rpy="0 0 0"/>
+    </joint>
+
+    <joint name="gnss" type="fixed">
+        <parent link="base_link"/>
+        <child link="gnss"/>
+        <origin xyz="0 0 1.5" rpy="0 0 0"/>
+    </joint>
+
+
+
+    <link name="pole">  
+        <collision>
+            <origin rpy="0 0 0" xyz="0 0 -0.75"/>
+            <geometry>
+                <box size="0.2 0.2 1.5"/>
+            </geometry>
+        </collision>
+        <visual>
+            <origin rpy="0 0 0" xyz="0 0 -0.75"/>
+            <geometry>
+                <box size="0.05 0.05 1.5"/>
+
+            </geometry>
+            <material name="grey">
+            </material>
+        </visual>
+    </link>
+
+    <link name="gnss">  
+        <collision>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <cylinder radius="0.2" length="0.2"/>
+            </geometry>
+        </collision>
+        <visual>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <cylinder radius="0.2" length="0.2"/>
+
+            </geometry>
+            <material name="grey">
+            </material>
+        </visual>
+    </link>
+
+
+
+</robot>

@@ -1,81 +1,108 @@
 #!/usr/bin/python3
 
+from cmath import pi
 import math
 import csv
 import numpy as np
+from mpl_toolkits import mplot3d
+import matplotlib.pyplot as plt
 
-class calculation:
-    
-    def __init__(self):
-        print ("inicialization")
-        self.pi = 3.1416
-        self.post = 1500
-        self.data = []
-        self.read_data()
-        self.calculate_projection(self.data)
+
+print ("inicialization")
+post_length = 1.5 #[m]
+data = []
+first_data = True
+old_row = []
+x = 0
+y = 0
+z = 0
+roll = 0
+pithc = 0
+yaw = 0
+pi_deg = 180 #[deg]
+
+
+
+
+
+#reading a csv file and saving in data
+with open('data.csv', mode ='r')as file:
+    csvFile = csv.reader(file,quoting=csv.QUOTE_NONNUMERIC)
+    for row in csvFile: 
+        data.append(row)
+
+x_vector = []
+y_vector = []
+z_vector = []
+roll_vector = []
+pithc_vector = []
+yaw_vector = []
+speed_vector = []
+for row in data:
+    #for first data it cannot calculate
+    if first_data:
+        first_data = False
+        old_row = row
+    else:
+        #it calculate a hight, from pithc and the length that was traveled
+        z = z + math.sin(-math.radians(old_row[4])) * math.sqrt((row[1]-old_row[1])**2 + (row[2]-old_row[2])**2)/1000
+
+        #the yaw is calculated based on new and previus point (vector), and if the vector x component is negativ it has to add 180 deg 
+        if(row[1]-old_row[1]) < 0:
+            yaw = math.degrees(math.atan((row[2]-old_row[2])/(row[1]-old_row[1]))) + pi_deg
+        else:
+            yaw = math.degrees(math.atan((row[2]-old_row[2])/(row[1]-old_row[1])))
+        
+        x = row[1]/1000
+        y = row[2]/1000
+        roll = math.radians(row[3])
+        pitch = math.radians(row[4])
+        yaw = math.radians(yaw)
+        gps_translation = [[1,0,0,x],[0,1,0,y],[0,0,1,post_length],[0,0,0,1]]
+        roll_rotation = [[1,0,0,0],[0,math.cos(roll),-math.sin(roll),0],[0,math.sin(roll),math.cos(roll),0],[0,0,0,1]]
+        pitch_rotation = [[math.cos(pitch),0,math.sin(pitch),0],[0,1,0,0],[-math.sin(pitch),0,math.cos(pitch),0],[0,0,0,1]]
+        yaw_rotation = [[math.cos(yaw),-math.sin(yaw),0,0],[math.sin(yaw),math.cos(yaw),0,0],[0,0,1,0],[0,0,0,1]]
+
+        base = np.dot(np.dot(np.dot(np.dot(gps_translation,roll_rotation),pitch_rotation),yaw_rotation),[[0],[0],[-post_length],[1]])
+        base[2][0] = z
+
+        #np.dot(np.dot(np.dot(np.dot(gps_translation,roll_rotation),pitch_rotation),yaw_rotation),[[0],[0],[-post_length],[1]])
+        x_vector.append(base[0][0])
+        y_vector.append(base[1][0])
+        z_vector.append(base[2][0])
+        roll_vector.append(roll)
+        pithc_vector.append(pitch)
+        yaw_vector.append(yaw)
+
+        speed_vector.append(math.sqrt((row[1]-old_row[1])**2 + (row[2]-old_row[2])**2)/1000/(row[0]-old_row[0]))
+
+        old_row = row
+
+# writing to csv file 
+with open("calculated data", 'w') as csvfile: 
+    csvwriter = csv.writer(csvfile) 
+    csvwriter.writerow([" x [m]"," y [m]"," z [m]"," roll [deg]"," pitch [deg]"," yaw [deg]"," speed [m/s]"]) 
+    i = 0
+    for x in x_vector:
+        csvwriter.writerow([x,y_vector[i],z_vector[i],math.degrees(roll_vector[i]),math.degrees(pithc_vector[i]),math.degrees(yaw_vector[i]),speed_vector[i]])
+        i+=1
+
+fig = plt.figure()
+ 
+# syntax for 3-D projection
+ax = plt.axes(projection ='3d')
+
+# plotting
+ax.plot3D(x_vector, y_vector, z_vector, 'green')
+ax.set_title('3D line plot of path')
+ax.set_xlim(7,10)
+ax.set_ylim(-36,-30)
+ax.set_zlim(-0.1,0.2)
+plt.show()
+
+
+
+
         
 
-    def read_data(self):
-        with open('data.csv', mode ='r')as file:
    
-            csvFile = csv.reader(file,quoting=csv.QUOTE_NONNUMERIC)
-            for row in csvFile: # each row is a list
-                self.data.append(row)
-
-
-    def calculate_projection(self,data):
-        i=0
-        projected_data=np.delete(data,np.s_[3:5], axis=1)
-        for point in data:
-
-            #print(point[1])
-            x_err = math.sin(point[4]*self.pi/180)*self.post
-            true_x = point[1] - x_err
-            #print(true_x)
-            y_err = math.sin(point[3]*self.pi/180)*self.post
-            true_y = point[2] - y_err
-            #print(true_y)
-            projected_data[i] = [point[0],true_x,true_y]
-            i+=1
-
-        print("vector of base")
-        print("time[s] | x[mm] | y[mm] ")
-        print(projected_data)
-        print("")
-
-        self.calculate_moving(projected_data)
-
-
-    def calculate_moving(self,projected_data):
-        first = True
-        i=0
-        old_point = []
-        heading = []
-        for point in projected_data:
-            if first :
-                old_point = point
-                first = False
-            else:
-                diff_x = old_point[1] - point[1]
-                diff_y = old_point[2] - point[2]
-                #print("heading: x: ",diff_x,"y: ",diff_y)
-                speed = math.sqrt(diff_x ** 2 + diff_y **2)/(point[0] - old_point[0])
-                #print ("speed [m/s]: ", speed/1000)
-                angle = math.atan(diff_y/diff_x)
-                #print("angle", angle*180/self.pi)
-                old_point = point
-                heading.append([point[0],diff_x,diff_y,angle*180/self.pi,speed/1000])
-                i+=1
-
-        print("Vector of heading")
-        print("time[s] | x[mm] | y[mm] | angle[deg] | speed[m/s]")
-        print(np.array(heading))
-
-   
-
-def main():
-    calculation()
-
-
-if __name__ == "__main__":
-    main()
