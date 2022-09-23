@@ -8,7 +8,6 @@ from mpl_toolkits import mplot3d
 import matplotlib.pyplot as plt
 
 
-print ("inicialization")
 post_length = 1.5 #[m]
 data = []
 first_data = True
@@ -44,8 +43,6 @@ for row in data:
         first_data = False
         old_row = row
     else:
-        #it calculate a hight, from pithc and the length that was traveled
-        z = z + math.sin(-math.radians(old_row[4])) * math.sqrt((row[1]-old_row[1])**2 + (row[2]-old_row[2])**2)/1000
 
         #the yaw is calculated based on new and previus point (vector), and if the vector x component is negativ it has to add 180 deg 
         if(row[1]-old_row[1]) < 0:
@@ -58,28 +55,37 @@ for row in data:
         roll = math.radians(row[3])
         pitch = math.radians(row[4])
         yaw = math.radians(yaw)
+        #matrics for transforming the points
         gps_translation = [[1,0,0,x],[0,1,0,y],[0,0,1,post_length],[0,0,0,1]]
         roll_rotation = [[1,0,0,0],[0,math.cos(roll),-math.sin(roll),0],[0,math.sin(roll),math.cos(roll),0],[0,0,0,1]]
         pitch_rotation = [[math.cos(pitch),0,math.sin(pitch),0],[0,1,0,0],[-math.sin(pitch),0,math.cos(pitch),0],[0,0,0,1]]
         yaw_rotation = [[math.cos(yaw),-math.sin(yaw),0,0],[math.sin(yaw),math.cos(yaw),0,0],[0,0,1,0],[0,0,0,1]]
 
-        base = np.dot(np.dot(np.dot(np.dot(gps_translation,roll_rotation),pitch_rotation),yaw_rotation),[[0],[0],[-post_length],[1]])
-        base[2][0] = z
+        '''
+        base = gps_translation @ roll_rotation @ pitch_rotation @ yaw_rotation @ [0,0,-post_length,1]
+        
+        where |z = post_length|cr = cos(roll)|sr = sin(roll)|cp = cos(pitch)|sp = sin(pitch)|cy = cos(yaw)|sy = sin(yaw)|
 
-        #np.dot(np.dot(np.dot(np.dot(gps_translation,roll_rotation),pitch_rotation),yaw_rotation),[[0],[0],[-post_length],[1]])
+        |x_new|   |1  0  0  x|       |1  0  0  0|       |cp 0 sp  0|        |cy -sy0  0|        |0 |
+        |y_new| = |0  1  0  y|   @   |0 cr -sr 0|   @   |0  1  0  0|    @   |sy cy 0  0|    @   |0 |
+        |z_new| = |0  0  1  z|   @   |0 sr cr  0|   @   |-sp0 cp  0|    @   |0  0  1  0|    @   |-z|
+        |  1  |   |0  0  0  1|       |0  0  0  1|       |0  0  0  1|        |0  0  0  1|        |1 |
+        
+        '''
+        base = np.dot(np.dot(np.dot(np.dot(gps_translation,roll_rotation),pitch_rotation),yaw_rotation),[[0],[0],[-post_length],[1]])
+        z += base[2][0]
         x_vector.append(base[0][0])
         y_vector.append(base[1][0])
-        z_vector.append(base[2][0])
+        z_vector.append(z)
         roll_vector.append(roll)
         pithc_vector.append(pitch)
         yaw_vector.append(yaw)
-
         speed_vector.append(math.sqrt((row[1]-old_row[1])**2 + (row[2]-old_row[2])**2)/1000/(row[0]-old_row[0]))
 
         old_row = row
 
 # writing to csv file 
-with open("calculated data", 'w') as csvfile: 
+with open("calculated_data", 'w') as csvfile: 
     csvwriter = csv.writer(csvfile) 
     csvwriter.writerow([" x [m]"," y [m]"," z [m]"," roll [deg]"," pitch [deg]"," yaw [deg]"," speed [m/s]"]) 
     i = 0
@@ -88,8 +94,7 @@ with open("calculated data", 'w') as csvfile:
         i+=1
 
 fig = plt.figure()
- 
-# syntax for 3-D projection
+
 ax = plt.axes(projection ='3d')
 
 # plotting

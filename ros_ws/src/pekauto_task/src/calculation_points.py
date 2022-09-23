@@ -47,9 +47,6 @@ while not rospy.is_shutdown():
             #it refresh at tge time that was recorded
             time.sleep(row[0]-old_row[0])
 
-            #it calculate a hight, from pithc and the length that was traveled
-            z = z + math.sin(-math.radians(old_row[4])) * math.sqrt((row[1]-old_row[1])**2 + (row[2]-old_row[2])**2)/1000
-
             #the yaw is calculated based on new and previus point (vector), and if the vector x component is negativ it has to add 180 deg 
             if(row[1]-old_row[1]) < 0:
                 yaw = math.degrees(math.atan((row[2]-old_row[2])/(row[1]-old_row[1]))) + pi_deg
@@ -67,8 +64,7 @@ while not rospy.is_shutdown():
             yaw_rotation = [[math.cos(yaw),-math.sin(yaw),0,0],[math.sin(yaw),math.cos(yaw),0,0],[0,0,1,0],[0,0,0,1]]
 
             base = np.dot(np.dot(np.dot(np.dot(gps_translation,roll_rotation),pitch_rotation),yaw_rotation),[[0],[0],[-post_length],[1]])
-            base[2] = z
-
+            z += base[2][0]
             #publishing a start point
             start = tf.TransformBroadcaster()
             start.sendTransform((9.48194, -34.867, 0),
@@ -78,7 +74,7 @@ while not rospy.is_shutdown():
                                 "world")
             #publishing a gnss point
             base_link = tf.TransformBroadcaster()
-            base_link.sendTransform((base[0], base[1], base[2]),
+            base_link.sendTransform((base[0], base[1], z),
                                     (tf.transformations.quaternion_from_euler(roll,pitch,yaw)),
                                     rospy.Time.now(),
                                     "base_link",
